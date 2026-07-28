@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { createServer as createViteServer } from "vite";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore";
+import { getCommunesByWilayaId } from 'algeria-locations';
 
 // Default config
 const defaultConfig = {
@@ -71,7 +72,7 @@ function authMiddleware(req: any, res: any, next: any) {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   app.use(express.json());
   app.use(cookieParser());
@@ -236,7 +237,6 @@ const wilayaMap: Record<string, string> = {
       
       // 1. Convert Arabic commune to French using algeria-locations
       try {
-        const { getCommunesByWilayaId } = require('algeria-locations');
         const algCommunes = getCommunesByWilayaId(finalWilayaCode);
         const match = algCommunes.find(c => c.name_ar === payload.Commune || c.name === payload.Commune);
         if (match) {
