@@ -187,13 +187,19 @@ const Features = () => {
   );
 };
 
+import review1 from './assets/review_1.webp';
+import review2 from './assets/review_2.webp';
+import review3 from './assets/review_3.webp';
+import review4 from './assets/review_4.webp';
+import review5 from './assets/review_5.webp';
+
 export const Testimonials = () => {
   const reviews = [
-    new URL('./assets/review_1.webp', import.meta.url).href,
-    new URL('./assets/review_2.webp', import.meta.url).href,
-    new URL('./assets/review_3.webp', import.meta.url).href,
-    new URL('./assets/review_4.webp', import.meta.url).href,
-    new URL('./assets/review_5.webp', import.meta.url).href
+    review1,
+    review2,
+    review3,
+    review4,
+    review5
   ];
 
   return (
@@ -533,7 +539,7 @@ export default function LandingPage({ config, onPurchase }: { config: any, onPur
           </div>
           <a 
             href="#checkout" 
-            onClick={onInitiateCheckout} 
+            onClick={handleInitiateCheckout} 
             className="flex-1 flex items-center justify-center gap-3 py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xl shadow-lg shadow-emerald-200 active:scale-95 transition-all"
           >
             <ShoppingCart size={22} />
