@@ -56,7 +56,7 @@ export default function LandingPageV3({ config, onPurchase }: { config: any, onP
     <div className="min-h-screen bg-slate-100 pb-24 font-sans text-slate-800" dir="rtl">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl min-h-screen overflow-hidden flex flex-col">
         {/* 1. Image 1 */}
-        <img src={img1} alt="Product" className="w-full object-cover" loading="eager" />
+        <img src={img1} alt="Product" loading="eager" decoding="async" fetchpriority="high" width="600" height="600" className="w-full object-cover aspect-square" />
 
         {/* 2. Checkout Form */}
         <section id="checkout" className="py-8 bg-white px-4 border-t border-slate-100">
@@ -77,10 +77,10 @@ export default function LandingPageV3({ config, onPurchase }: { config: any, onP
         </div>
 
         {/* 4. Images List */}
-        <img src={img2} alt="Product details" className="w-full object-cover" loading="lazy" />
-        <img src={img3} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
-        <img src={img4} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
-        <img src={img5} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
+        <img src={img2} alt="Product details" loading="lazy" decoding="async" width="600" height="600" className="w-full object-cover aspect-square" />
+        <img src={img3} alt="Product details" loading="lazy" decoding="async" width="600" height="600" className="w-full object-cover aspect-square mt-2" />
+        <img src={img4} alt="Product details" loading="lazy" decoding="async" width="600" height="600" className="w-full object-cover aspect-square mt-2" />
+        <img src={img5} alt="Product details" loading="lazy" decoding="async" width="600" height="600" className="w-full object-cover aspect-square mt-2" />
 
         {/* 5. Reviews */}
         <Testimonials />
