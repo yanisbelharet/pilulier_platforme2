@@ -187,11 +187,11 @@ const Features = () => {
   );
 };
 
-import review1 from 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/IzYq9H3Zol0ieYuB6LIQYgIviQxC8Jlpbfj3Z0Jx.webp';
-import review2 from 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/V7Z4mS2gaEEQcB1uMb8wdDFBzvQU2kgyKIMRX2OA.webp';
-import review3 from 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/syZLSOxSzNOvwdKnK9Kve8C5XAvjAcxvZwDrmlTT.webp';
-import review4 from 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/ZQwZQofFB8iGB5NrPWQkveTQpjuIaaM7XPJK01D5.webp';
-import review5 from 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/t8CauggAXXRf8cM8tXzQdrCZzuoSgkQeSnAMGKJb.webp';
+const review1 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/IzYq9H3Zol0ieYuB6LIQYgIviQxC8Jlpbfj3Z0Jx.webp';
+const review2 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/V7Z4mS2gaEEQcB1uMb8wdDFBzvQU2kgyKIMRX2OA.webp';
+const review3 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/syZLSOxSzNOvwdKnK9Kve8C5XAvjAcxvZwDrmlTT.webp';
+const review4 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/ZQwZQofFB8iGB5NrPWQkveTQpjuIaaM7XPJK01D5.webp';
+const review5 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/t8CauggAXXRf8cM8tXzQdrCZzuoSgkQeSnAMGKJb.webp';
 
 export const Testimonials = () => {
   const reviews = [
@@ -201,6 +201,8 @@ export const Testimonials = () => {
     review4,
     review5
   ];
+
+  // ...
 
   return (
     <section className="py-16 bg-slate-50 px-4 border-y border-slate-100">
