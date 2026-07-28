@@ -32,9 +32,7 @@ export const initAuth = (
         if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
       } else if (!isSigningIn) {
         cachedAccessToken = null;
-      localStorage.removeItem("googleAccessToken");
         localStorage.removeItem("googleAccessToken");
-  localStorage.removeItem("googleAccessToken");
         if (onAuthFailure) onAuthFailure();
       }
     } else {
