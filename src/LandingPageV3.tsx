@@ -4,12 +4,12 @@ import { motion } from 'motion/react';
 import { ShoppingCart } from 'lucide-react';
 import { CheckoutForm, Testimonials } from './LandingPage';
 
-// Import images to ensure Vite bundles them and handles paths correctly
-import img1 from './assets/1_optimise.webp';
-import img2 from './assets/2_optimise.webp';
-import img3 from './assets/3_optimise.webp';
-import img4 from './assets/4_optimise.webp';
-import img5 from './assets/5_optimise.webp';
+// Images hébergées directement sur le CDN YouCan (plus besoin de les inclure dans le bundle)
+const img1 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/HxVCmxikiwh6FWU4vOJ9898xYRoXH5n8uTCqLIP3.webp';
+const img2 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/1FEj3c7j36EWW7kiy2pKEZM7qvWb9mSMlohcRY2L.webp';
+const img3 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/U2IocP01AopSh7BOOXvMuHvfpw6ZXuCo4NqtoSRW.webp';
+const img4 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/h8zAvfzkwgJ8jrYQ733QQlmJFFXLWn5A4V8DAN7S.webp';
+const img5 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/zEIXhfMlrE4wnCPQs6Bps1b806axSQE6gDj2ND5t.webp';
 
 export default function LandingPageV3({ config, onPurchase }: { config: any, onPurchase: (p: number, product: any, formData?: any) => void }) {
   const { id } = useParams();
@@ -39,10 +39,6 @@ export default function LandingPageV3({ config, onPurchase }: { config: any, onP
       let pastCheckout = false;
 
       if (checkoutForm) {
-        // Show sticky button when we've scrolled PAST the checkout form
-        // checkoutForm.getBoundingClientRect().bottom < window.innerHeight means the bottom of the form is visible, 
-        // let's say when the bottom is above the viewport ( < 0 ) or mostly above.
-        // Let's just say < 0 so it appears when the form is hidden.
         pastCheckout = checkoutForm.getBoundingClientRect().bottom < 0;
       } else {
         pastCheckout = window.scrollY > 400;
@@ -60,7 +56,7 @@ export default function LandingPageV3({ config, onPurchase }: { config: any, onP
     <div className="min-h-screen bg-slate-100 pb-24 font-sans text-slate-800" dir="rtl">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl min-h-screen overflow-hidden flex flex-col">
         {/* 1. Image 1 */}
-        <img src={img1} alt="Product" className="w-full object-cover" />
+        <img src={img1} alt="Product" className="w-full object-cover" loading="eager" />
 
         {/* 2. Checkout Form */}
         <section id="checkout" className="py-8 bg-white px-4 border-t border-slate-100">
@@ -81,10 +77,10 @@ export default function LandingPageV3({ config, onPurchase }: { config: any, onP
         </div>
 
         {/* 4. Images List */}
-        <img src={img2} alt="Product details" className="w-full object-cover" />
-        <img src={img3} alt="Product details" className="w-full object-cover mt-2" />
-        <img src={img4} alt="Product details" className="w-full object-cover mt-2" />
-        <img src={img5} alt="Product details" className="w-full object-cover mt-2" />
+        <img src={img2} alt="Product details" className="w-full object-cover" loading="lazy" />
+        <img src={img3} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
+        <img src={img4} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
+        <img src={img5} alt="Product details" className="w-full object-cover mt-2" loading="lazy" />
 
         {/* 5. Reviews */}
         <Testimonials />
