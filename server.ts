@@ -4,8 +4,9 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import { createServer as createViteServer } from "vite";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore/lite";
 import { getCommunesByWilayaId } from 'algeria-locations';
+import { google } from 'googleapis';
 
 // Default config
 const defaultConfig = {
@@ -30,10 +31,16 @@ const defaultConfig = {
   ]
 };
 
-import fs from 'fs';
-const firebaseConfig = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
+const firebaseConfig = {
+  projectId: "gen-lang-client-0983661862",
+  appId: "1:492139124696:web:b67e8ef2beaa622150c4ad",
+  apiKey: "AIzaSyBmaOFGKyMwJ735BkZ4Psmdx6H2rAtBei8",
+  authDomain: "gen-lang-client-0983661862.firebaseapp.com",
+  storageBucket: "gen-lang-client-0983661862.firebasestorage.app",
+  messagingSenderId: "492139124696"
+};
 
-const firebaseApp = initializeApp({ projectId: firebaseConfig.projectId });
+const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp, "ai-studio-e9c2d681-7821-46c6-83a5-06aac423e67a");
 
 async function getConfig() {
@@ -423,6 +430,54 @@ const wilayaMap: Record<string, string> = {
         });
       } catch (err) {
         console.error("Error saving order to Firestore:", err);
+      }
+
+      // Sync to Google Sheets if Service Account is configured
+      const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+      let saKey = process.env.GOOGLE_PRIVATE_KEY;
+      
+      if (saEmail && saKey) {
+        try {
+          saKey = saKey.replace(/\\n/g, '\n');
+          const auth = new google.auth.JWT(
+            saEmail,
+            null,
+            saKey,
+            ['https://www.googleapis.com/auth/spreadsheets']
+          );
+          
+          const configRef = doc(db, "config", "main");
+          const configSnap = await getDoc(configRef);
+          if (configSnap.exists()) {
+            const spreadsheetId = configSnap.data().spreadsheetId;
+            if (spreadsheetId) {
+              const sheets = google.sheets({ version: 'v4', auth });
+              const dateStr = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Algiers' });
+              
+              await sheets.spreadsheets.values.append({
+                spreadsheetId,
+                range: 'Commandes!A1',
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                  values: [[
+                    displayId,
+                    name,
+                    phone,
+                    wilaya,
+                    commune,
+                    deliveryType === 'home' ? 'Domicile' : 'Stop Desk',
+                    price,
+                    dateStr,
+                    'Nouveau'
+                  ]]
+                }
+              });
+              console.log("Successfully synced order to Google Sheets.");
+            }
+          }
+        } catch (sheetErr) {
+          console.error("Error syncing to Google Sheets:", sheetErr);
+        }
       }
 
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
