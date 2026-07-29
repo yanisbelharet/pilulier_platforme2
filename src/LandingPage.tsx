@@ -80,7 +80,7 @@ const Hero = ({ product, promoActive, timerEnabled, timerHours, onInitiateChecko
             decoding="async"
             width="800"
             height="600"
-            className="w-full h-auto aspect-[4/3] rounded-[40px] shadow-2xl border border-slate-100 object-cover"
+            className="w-full h-auto rounded-[40px] shadow-2xl border border-slate-100"
           />
           {/* Badge */}
           {promoActive && <div className="absolute -bottom-4 -left-4 bg-rose-500 text-white w-24 h-24 rounded-full flex flex-col items-center justify-center font-black shadow-lg shadow-rose-200 transform -rotate-12 border-4 border-white">
@@ -138,7 +138,7 @@ const Features = () => {
             decoding="async"
             width="600"
             height="256"
-            className="w-full h-64 object-cover rounded-3xl border border-slate-200/50"
+            className="w-full h-auto rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
@@ -161,7 +161,7 @@ const Features = () => {
             decoding="async"
             width="600"
             height="256"
-            className="w-full h-64 object-cover rounded-3xl border border-slate-200/50"
+            className="w-full h-auto rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
@@ -184,7 +184,7 @@ const Features = () => {
             decoding="async"
             width="600"
             height="400"
-            className="w-full h-auto aspect-[3/2] object-cover rounded-3xl border border-slate-200/50"
+            className="w-full h-auto rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
