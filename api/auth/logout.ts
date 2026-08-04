@@ -1,5 +1,6 @@
-export default function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).end();
-  res.setHeader('Set-Cookie', 'admin_token=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+export default function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  
+  res.setHeader('Set-Cookie', 'admin_token=; Path=/; HttpOnly; Max-Age=0');
   return res.status(200).json({ success: true });
 }

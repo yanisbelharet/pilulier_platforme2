@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Settings, Save, LogOut, TrendingUp, ShoppingCart, ShoppingBag, Tag, Eye, Package, DollarSign, LayoutDashboard, BarChart3, Clock, Plane, Phone, CheckCircle, Search, RefreshCw, AlertCircle, MapPin } from 'lucide-react';
+import { Lock, Settings, Save, LogOut, TrendingUp, Users, ShoppingCart, ShoppingBag, Tag, Eye, Package, DollarSign, LayoutDashboard, BarChart3, Bell, Clock, Plane, Phone, CheckCircle, XCircle, Search, RefreshCw, AlertCircle, MapPin } from 'lucide-react';
 import * as import_data from './data';
 import { motion } from 'motion/react';
+import { initAuth, googleSignIn, getAccessToken, logout } from './firebase';
 import { User } from 'firebase/auth';
 
 export default function Dashboard() {
@@ -11,8 +12,8 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   
   const [config, setConfig] = useState<any>({
-    productPrice: 2000,
-    productOldPrice: 3500,
+    productPrice: 2900,
+    productOldPrice: 4200,
     promoActive: true,
     promoText: 'عرض ترويجي محدود!',
     visits: 0,
@@ -24,7 +25,10 @@ export default function Dashboard() {
   });
   
   const [orders, setOrders] = useState<any[]>([]);
+  const [googleUser, setGoogleUser] = useState<User | null>(null);
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [syncingSheets, setSyncingSheets] = useState(false);
+  const [syncDateFilter, setSyncDateFilter] = useState('all');
   const [sheetMessage, setSheetMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [customSheetInput, setCustomSheetInput] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
@@ -41,6 +45,20 @@ export default function Dashboard() {
   const [saveMessage, setSaveMessage] = useState('');
 
   
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await googleSignIn();
+      if (result) {
+        setGoogleUser(result.user);
+        setGoogleToken(result.accessToken);
+        setSheetMessage({ type: 'success', text: 'Connecté à Google avec succès.' });
+      }
+    } catch (err) {
+      console.error(err);
+      setSheetMessage({ type: 'error', text: 'Échec de la connexion Google.' });
+    }
+  };
+
   
   const saveCustomSheetId = async () => {
     let extractedId = customSheetInput.trim();
@@ -62,6 +80,169 @@ export default function Dashboard() {
     }
   };
 
+  const handleSyncToSheets = async (isAutoSync: boolean | React.MouseEvent = false) => {
+    if (typeof isAutoSync !== 'boolean') isAutoSync = false;
+    if (!googleToken) {
+      setSheetMessage({ type: 'error', text: 'Veuillez vous connecter à Google.' });
+      return;
+    }
+    
+    setSyncingSheets(true);
+    setSheetMessage(null);
+    
+    try {
+      let spreadsheetId = config.spreadsheetId;
+      
+      if (!spreadsheetId) {
+        const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${googleToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            properties: { title: 'Commandes - ' + new Date().toLocaleDateString() },
+            sheets: [{ properties: { title: 'Commandes' } }]
+          })
+        });
+        
+        if (!createRes.ok) throw new Error('Échec de la création du fichier Google Sheet');
+        const sheetData = await createRes.json();
+        spreadsheetId = sheetData.spreadsheetId;
+        
+        await fetchAuth('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...config, spreadsheetId })
+        });
+        setConfig({ ...config, spreadsheetId });
+        
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:I1?valueInputOption=USER_ENTERED`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${googleToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [['ID', 'Date', 'Client', 'Téléphone', 'Wilaya', 'Commune', 'Type Livraison', 'Produit', 'Prix Total']]
+          })
+        });
+      }
+      
+      // Fetch existing IDs from Google Sheets to avoid duplicates
+      let existingIds = [];
+      let sheetName = 'Commandes';
+      try {
+        // First get spreadsheet info to find the first sheet name if Commandes doesn't exist
+        const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
+          headers: { 'Authorization': `Bearer ${googleToken}` }
+        });
+        if (metaRes.status === 404) {
+          throw new Error("Le fichier Google Sheets n'existe plus ou est inaccessible. Veuillez lier un nouveau fichier.");
+        }
+        if (metaRes.status === 401) {
+          setGoogleToken(null);
+          setGoogleUser(null);
+          localStorage.removeItem("googleAccessToken");
+          throw new Error("Session Google expirée. Veuillez vous reconnecter.");
+        }
+        if (metaRes.ok) {
+           const metaData = await metaRes.json();
+           if (metaData.sheets && metaData.sheets.length > 0) {
+              const hasCommandes = metaData.sheets.some(s => s.properties.title === 'Commandes');
+              if (!hasCommandes) {
+                 sheetName = metaData.sheets[0].properties.title;
+              }
+           }
+        }
+      
+        const sheetDataRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(sheetName)}!A:A`, {
+          headers: { 'Authorization': `Bearer ${googleToken}` }
+        });
+        if (sheetDataRes.ok) {
+           const existingData = await sheetDataRes.json();
+           if (existingData.values) {
+              existingIds = existingData.values.map(row => String(row[0]));
+           }
+        }
+      } catch (err: any) {
+        if (err.message.includes('Session Google') || err.message.includes('fichier Google Sheets')) {
+          throw err; // re-throw to the outer try/catch
+        }
+        console.error("Error fetching existing sheets data:", err);
+      }
+
+      // Filter for new orders (not yet in the sheet)
+      // Display ID or internal ID
+      let ordersToSync = orders;
+      if (!isAutoSync && syncDateFilter !== 'all') {
+         const now = new Date();
+         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+         const yesterday = new Date(today);
+         yesterday.setDate(yesterday.getDate() - 1);
+         const last7days = new Date(today);
+         last7days.setDate(last7days.getDate() - 7);
+         
+         ordersToSync = orders.filter(o => {
+            const d = new Date(o.createdAt);
+            if (syncDateFilter === 'today') return d >= today;
+            if (syncDateFilter === 'yesterday') return d >= yesterday && d < today;
+            if (syncDateFilter === '7days') return d >= last7days;
+            return true;
+         });
+      }
+      const newOrders = ordersToSync.filter(o => !existingIds.includes(String(o.displayId || o.id)));
+      
+      if (newOrders.length === 0) {
+         setSheetMessage({ type: 'success', text: 'Toutes les commandes sont déjà synchronisées.' });
+         setSyncingSheets(false);
+         return;
+      }
+      
+      // Sort to append oldest first among the new ones
+      const sortedNewOrders = [...newOrders].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      const values = sortedNewOrders.map(o => [
+        o.displayId || o.id,
+        o.createdAt ? new Date(o.createdAt).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR'),
+        o.name,
+        o.phone,
+        o.wilaya,
+        o.commune,
+        o.deliveryType === 'home' ? 'À Domicile' : 'Point Relais',
+        o.productName || 'Produit',
+        o.price
+      ]);
+      
+      const appendRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:append?valueInputOption=USER_ENTERED`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${googleToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ values: values })
+      });
+      if (!appendRes.ok) {
+        const errorData = await appendRes.text();
+        console.error("Append failed:", errorData);
+        if (appendRes.status === 401) {
+          setGoogleToken(null);
+          setGoogleUser(null);
+          localStorage.removeItem("googleAccessToken");
+          throw new Error("Session Google expirée. Veuillez vous reconnecter.");
+        }
+        throw new Error('Erreur API Sheets: ' + appendRes.status);
+      }
+      
+      setSheetMessage({ type: 'success', text: 'Synchronisation réussie avec Google Sheets !' });
+      
+    } catch (err: any) {
+      console.error(err);
+      setSheetMessage({ type: 'error', text: err.message || 'Erreur de synchronisation' });
+    } finally {
+      setSyncingSheets(false);
+    }
+  };
 
   const fetchAuth = (url: string, options: any = {}) => {
     const token = localStorage.getItem('admin_token');
@@ -73,13 +254,19 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    const unsubscribe = initAuth((user, token) => {
+      setGoogleUser(user);
+      setGoogleToken(token);
+    }, () => {
+      setGoogleUser(null);
+      setGoogleToken(null);
+    });
+
     // Check if we can fetch config to verify authentication
     fetchAuth('/api/config')
       .then(res => res.json())
       .then(data => {
-        if (!data.error) {
-          setConfig(data);
-        }
+        setConfig(data);
       });
       
     const fetchOrders = () => {
@@ -108,6 +295,17 @@ export default function Dashboard() {
     }
   }, [isAuthenticated]);
 
+  // Auto-sync to sheets when orders length increases
+  useEffect(() => {
+    if (googleToken && config.spreadsheetId && orders.length > previousOrderCount) {
+      // Don't auto-sync on initial load if we just loaded orders, 
+      // but wait, if it's initial load, previousOrderCount is 0, it WILL sync. That's good to ensure consistency.
+      if (!syncingSheets) {
+        handleSyncToSheets(true);
+        setPreviousOrderCount(orders.length);
+      }
+    }
+  }, [orders.length, googleToken, config.spreadsheetId]);
 
 
   const updateOrderStatus = async (id: string, status: string, additionalData: any = {}) => {
@@ -984,60 +1182,109 @@ export default function Dashboard() {
                   </p>
 
                   <div className="flex flex-col gap-6 items-start">
-                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-6">
-                      <div className="mb-6">
-                        <h4 className="text-md font-bold text-slate-800 mb-2">Configuration de l'intégration</h4>
-                        <p className="text-sm text-slate-600 mb-4">
-                          Cette intégration utilise un Service Account Google pour une synchronisation permanente et sécurisée des commandes sans nécessiter de reconnexion.
-                        </p>
-                        
-                        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-6">
-                          <p className="text-sm text-indigo-800 font-medium">
-                            <strong>Important :</strong> Vous devez partager votre fichier Google Sheets avec l'email du Service Account (définie dans vos variables d'environnement) avec les droits d'<strong>Éditeur</strong>.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-200 pt-6">
-                        <div className="mb-6">
-                          <h4 className="text-md font-bold text-slate-800 mb-3">Fichier Google Sheets</h4>
-                          {config.spreadsheetId ? (
-                            <div className="mb-4">
-                              <p className="text-sm font-bold text-slate-700 mb-1">Fichier Actuel :</p>
-                              <a 
-                                href={`https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/edit`} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="text-indigo-600 hover:underline break-all"
-                              >
-                                Ouvrir le fichier
-                              </a>
+                    {!googleUser ? (
+                      <button 
+                        onClick={handleGoogleSignIn}
+                        className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl font-bold flex items-center gap-3 shadow-sm transition-all"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 48 48">
+                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                          <path fill="none" d="M0 0h48v48H0z"></path>
+                        </svg>
+                        Se connecter avec Google
+                      </button>
+                    ) : (
+                      <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">
+                              {googleUser.displayName?.charAt(0) || 'U'}
                             </div>
-                          ) : (
-                            <p className="text-sm text-amber-600 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                              Aucun fichier Sheets n'est encore lié.
-                            </p>
-                          )}
+                            <div>
+                              <p className="font-bold text-slate-800">{googleUser.displayName}</p>
+                              <p className="text-sm text-slate-500">{googleUser.email}</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={async () => { await logout(); setGoogleUser(null); setGoogleToken(null); }}
+                            className="text-sm text-rose-600 font-bold hover:underline"
+                          >
+                            Déconnexion
+                          </button>
+                        </div>
+                        
+                        <div className="border-t border-slate-200 pt-6">
+                          <div className="mb-6">
+                            <h4 className="text-md font-bold text-slate-800 mb-3">Lier un fichier Google Sheets</h4>
+                            {config.spreadsheetId ? (
+                              <div className="mb-4">
+                                <p className="text-sm font-bold text-slate-700 mb-1">Fichier Actuel :</p>
+                                <a 
+                                  href={`https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/edit`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-indigo-600 hover:underline break-all"
+                                >
+                                  Ouvrir le fichier actuel
+                                </a>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-amber-600 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                Aucun fichier Sheets n'est encore lié.
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-2 mb-2">
+                              <input 
+                                type="text"
+                                placeholder="Lien ou ID du nouveau Google Sheet (Optionnel)"
+                                className="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                value={customSheetInput}
+                                onChange={(e) => setCustomSheetInput(e.target.value)}
+                              />
+                              <button 
+                                onClick={saveCustomSheetId}
+                                disabled={!customSheetInput.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all disabled:opacity-50"
+                              >
+                                Lier ce fichier
+                              </button>
+                            </div>
+                            <p className="text-xs text-slate-500">Si vous laissez vide et cliquez sur synchroniser, un nouveau fichier sera créé automatiquement.</p>
+                          </div>
                           
-                          <div className="flex gap-2 mb-2">
-                            <input 
-                              type="text"
-                              placeholder="Lien ou ID du Google Sheet (ex: 1cy3-...)"
-                              className="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                              value={customSheetInput}
-                              onChange={(e) => setCustomSheetInput(e.target.value)}
-                            />
-                            <button 
-                              onClick={saveCustomSheetId}
-                              disabled={!customSheetInput.trim()}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all disabled:opacity-50"
-                            >
-                              Enregistrer
-                            </button>
+                          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                            <h4 className="text-sm font-bold text-emerald-800 mb-2">Synchronisation Manuelle</h4>
+                            <p className="text-xs text-emerald-600 mb-4">La synchronisation est automatique lors des nouvelles commandes. Vous pouvez forcer la synchronisation manuellement pour les anciennes commandes.</p>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <select 
+                                className="bg-white border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-sm font-bold shadow-sm"
+                                value={syncDateFilter}
+                                onChange={(e) => setSyncDateFilter(e.target.value)}
+                              >
+                                <option value="all">Toutes les commandes</option>
+                                <option value="today">Aujourd'hui</option>
+                                <option value="yesterday">Hier</option>
+                                <option value="7days">7 derniers jours</option>
+                              </select>
+
+                              <button
+                                onClick={handleSyncToSheets}
+                                disabled={syncingSheets}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-70 shadow-sm"
+                              >
+                                <RefreshCw size={20} className={syncingSheets ? 'animate-spin' : ''} />
+                                {syncingSheets ? 'Synchronisation...' : 'Synchroniser'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                     
                     {sheetMessage && (
                       <div className={`w-full p-4 rounded-xl font-bold flex items-center gap-2 ${sheetMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>

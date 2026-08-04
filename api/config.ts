@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore/lite";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import jwt from "jsonwebtoken";
 
 const firebaseConfig = {
@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, "ai-studio-e9c2d681-7821-46c6-83a5-06aac423e67a");
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req, res) {
   const defaultConfig = {
     productPrice: 2000,
     fbPixelId: "",
@@ -36,8 +36,7 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     // Auth Check
-    const token = req.cookies?.admin_token || req.headers.cookie?.match(/(?:(?:^|.*;\s*)admin_token\s*\=\s*([^;]*).*$)|^.*$/)?.[1] || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
-    
+    const token = req.cookies?.admin_token || req.headers.cookie?.match(/(?:(?:^|.*;\s*)admin_token\s*\=\s*([^;]*).*$)|^.*$/)?.[1];
     if (!token) return res.status(401).json({ error: "Unauthorized" });
 
     try {

@@ -75,12 +75,7 @@ const Hero = ({ product, promoActive, timerEnabled, timerHours, onInitiateChecko
           <img 
             src={imageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5e4708705?q=80&w=800&auto=format&fit=crop'} 
             alt={name} 
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            width="800"
-            height="600"
-            className="w-full h-auto rounded-[40px] shadow-2xl border border-slate-100"
+            className="w-full h-auto rounded-[40px] shadow-2xl border border-slate-100 object-cover"
           />
           {/* Badge */}
           {promoActive && <div className="absolute -bottom-4 -left-4 bg-rose-500 text-white w-24 h-24 rounded-full flex flex-col items-center justify-center font-black shadow-lg shadow-rose-200 transform -rotate-12 border-4 border-white">
@@ -134,11 +129,7 @@ const Features = () => {
           <img 
             src="https://cdn.youcan.shop/stores/defae844a0bbda3e5af90b6e7c10442b/others/K7xCrltppCNd4UVbJGSOqObap2IJ85nFDeub8El2.jpg" 
             alt="منبه إلكتروني دقيق" 
-            loading="lazy"
-            decoding="async"
-            width="600"
-            height="256"
-            className="w-full h-auto rounded-3xl border border-slate-200/50"
+            className="w-full h-64 object-cover rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
@@ -157,11 +148,7 @@ const Features = () => {
           <img 
             src="https://cdn.youcan.shop/stores/defae844a0bbda3e5af90b6e7c10442b/others/GrJtr5SCJuOFaXIMfq64G6JQ2Csh05L4tVhE9gIH.jpg" 
             alt="تصميم مقسم لـ 7 خانات" 
-            loading="lazy"
-            decoding="async"
-            width="600"
-            height="256"
-            className="w-full h-auto rounded-3xl border border-slate-200/50"
+            className="w-full h-64 object-cover rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
@@ -180,11 +167,7 @@ const Features = () => {
           <img 
             src="https://cdn.youcan.shop/stores/defae844a0bbda3e5af90b6e7c10442b/others/IAhDSWpHBrDd7Rz5sIx4K1KFqeaK2m2D0JXU76OA.jpg" 
             alt="حجم محمول وخفيف" 
-            loading="lazy"
-            decoding="async"
-            width="600"
-            height="400"
-            className="w-full h-auto rounded-3xl border border-slate-200/50"
+            className="w-full h-auto object-cover rounded-3xl border border-slate-200/50"
           />
           <div className="px-2">
             <h3 className="text-2xl font-black text-slate-900 mb-3 flex items-center gap-3">
@@ -234,15 +217,7 @@ export const Testimonials = () => {
         <div className="space-y-6">
           {reviews.map((imgSrc, i) => (
             <div key={i} className="rounded-3xl overflow-hidden shadow-md border border-slate-100">
-              <img 
-                src={imgSrc} 
-                alt={`رأي زبون ${i + 1}`} 
-                loading="lazy"
-                decoding="async"
-                width="600"
-                height="800"
-                className="w-full h-auto object-cover" 
-              />
+              <img src={imgSrc} alt={`رأي زبون ${i + 1}`} className="w-full h-auto object-cover" />
             </div>
           ))}
         </div>
