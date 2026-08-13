@@ -101,10 +101,15 @@ async function startServer() {
   });
 
   app.post("/api/config", authMiddleware, async (req, res) => {
-    const currentConfig = await getConfig();
-    const newConfig = { ...currentConfig, ...req.body };
-    await saveConfig(newConfig);
-    res.json({ success: true, config: newConfig });
+    try {
+      const currentConfig = await getConfig();
+      const newConfig = { ...currentConfig, ...req.body };
+      await saveConfig(newConfig);
+      res.json({ success: true, config: newConfig });
+    } catch (error) {
+      console.error("Error saving config:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   

@@ -275,15 +275,20 @@ export default function Dashboard() {
           if (res.ok) {
             setIsAuthenticated(true);
             return res.json();
+          } else if (res.status === 401) {
+            setIsAuthenticated(false);
+            localStorage.removeItem('admin_token');
           }
-          return [];
+          return null;
         })
         .then(data => {
-          if (data && data.length) {
+          if (data && Array.isArray(data)) {
             setOrders(prev => JSON.stringify(prev) !== JSON.stringify(data) ? data : prev);
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          console.error("fetchOrders error", err);
+        });
     };
 
     if (isAuthenticated) {
@@ -407,8 +412,8 @@ export default function Dashboard() {
       const st = o.status || 'pending';
       const matchStatus = dhdFilter === 'all' || st === dhdFilter;
       const matchSearch = !dhdSearch || 
-                          o.name.toLowerCase().includes(dhdSearch.toLowerCase()) || 
-                          o.phone.includes(dhdSearch) || 
+                          (o.name || "").toLowerCase().includes(dhdSearch.toLowerCase()) || 
+                          (o.phone || "").includes(dhdSearch) || 
                           (o.dhdTrackingId && o.dhdTrackingId.includes(dhdSearch));
       return matchStatus && matchSearch;
     });
@@ -479,11 +484,12 @@ export default function Dashboard() {
         if (res.status === 401) {
           setIsAuthenticated(false);
         } else {
-          setSaveMessage('Erreur lors de la sauvegarde');
+          const text = await res.text();
+          setSaveMessage('Erreur: ' + text.substring(0, 50));
         }
       }
-    } catch (err) {
-      setSaveMessage('Erreur lors de la sauvegarde');
+    } catch (err: any) {
+      setSaveMessage('Erreur: ' + (err.message || 'Network error'));
     } finally {
       setSaving(false);
     }
@@ -537,8 +543,8 @@ export default function Dashboard() {
   // Calculate totals
   const filteredOrders = orders.filter(order => {
     if (dateFilter === 'all') return true;
-    if (!order.createdAt || !order.createdAt.seconds) return true;
-    const orderDate = new Date(order.createdAt.seconds * 1000);
+    if (!order.createdAt) return true;
+    const orderDate = new Date(order.createdAt.seconds ? order.createdAt.seconds * 1000 : order.createdAt);
     const now = new Date();
     if (dateFilter === 'today') {
       return orderDate.getDate() === now.getDate() &&
