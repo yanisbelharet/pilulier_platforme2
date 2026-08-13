@@ -11,7 +11,7 @@ const img3 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/ot
 const img4 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/h8zAvfzkwgJ8jrYQ733QQlmJFFXLWn5A4V8DAN7S.webp';
 const img5 = 'https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/zEIXhfMlrE4wnCPQs6Bps1b806axSQE6gDj2ND5t.webp';
 
-export default function LandingPageV3({ config, onPurchase }: { config: any, onPurchase: (p: number, product: any, formData?: any) => void }) {
+export default function LandingPageV4({ config, onPurchase }: { config: any, onPurchase: (p: number, product: any, formData?: any) => void }) {
   const { id } = useParams();
   const product = config.products ? config.products.find((p: any) => p.id === id) : null;
   

@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './LandingPage';
-import LandingPageV2 from './LandingPageV2';
-import LandingPageV3 from './LandingPageV3';
-import Dashboard from './Dashboard';
-import Storefront from './Storefront';
-import ThankYou from './ThankYou';
 import { db } from './firebase';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+
+const LandingPage = lazy(() => import('./LandingPage'));
+const LandingPageV2 = lazy(() => import('./LandingPageV2'));
+const LandingPageV3 = lazy(() => import('./LandingPageV3'));
+const LandingPageV4 = lazy(() => import('./LandingPageV4'));
+const Dashboard = lazy(() => import('./Dashboard'));
+const Storefront = lazy(() => import('./Storefront'));
+const ThankYou = lazy(() => import('./ThankYou'));
 
 export default function App() {
   const [config, setConfig] = useState<{
@@ -42,6 +44,16 @@ export default function App() {
       imageUrl: "https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/UcuCAbqBuLvphQwpgudEKiSTjNT7tkDWqG2nmVoF.webp",
       isVisible: true,
       customPath: "/product-v3/med-alarm"
+    },
+    {
+      id: "med-alarm-v4",
+      name: "منبه الدواء الذكي (النسخة 4)",
+      description: "تخلص من القلق ونظم أدويتك بكل سهولة! حافظة ذكية مزودة بـ 4 منبهات قوية لتذكيرك في الوقت المحدد.",
+      price: 2900,
+      oldPrice: 4200,
+      imageUrl: "https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/UcuCAbqBuLvphQwpgudEKiSTjNT7tkDWqG2nmVoF.webp",
+      isVisible: true,
+      customPath: "/product-v4/med-alarm"
     }
   ];
 
@@ -56,17 +68,8 @@ export default function App() {
           // Add missing default products to the saved products based on ID
           const existingIds = new Set(data.products.map((p: any) => p.id));
           const missingProducts = defaultProducts.filter(p => !existingIds.has(p.id));
-          
-          // Force price update
-          const updatedProducts = data.products.map((p: any) => {
-             const defaultProd = defaultProducts.find(dp => dp.id === p.id);
-             if (defaultProd && (p.price !== defaultProd.price || p.oldPrice !== defaultProd.oldPrice)) {
-                return { ...p, price: defaultProd.price, oldPrice: defaultProd.oldPrice };
-             }
-             return p;
-          });
 
-          mergedProducts = [...updatedProducts, ...missingProducts];
+          mergedProducts = [...data.products, ...missingProducts];
         }
 
         setConfig({ 
@@ -172,15 +175,18 @@ export default function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Storefront config={config} />} />
-        <Route path="/product/:id" element={<LandingPage config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
-        <Route path="/product-v2/:id" element={<LandingPageV2 config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
-        <Route path="/product-v3/:id" element={<LandingPageV3 config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
-        <Route path="/admin" element={<Dashboard />} />
-        <Route path="/thank-you" element={<ThankYou config={config} />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
+        <Routes>
+          <Route path="/" element={<Storefront config={config} />} />
+          <Route path="/product/:id" element={<LandingPage config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
+          <Route path="/product-v2/:id" element={<LandingPageV2 config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
+          <Route path="/product-v3/:id" element={<LandingPageV3 config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
+          <Route path="/product-v4/:id" element={<LandingPageV4 config={config} onPurchase={(price, product, formData) => handlePurchase(price, product, formData)} />} />
+          <Route path="/admin" element={<Dashboard />} />
+          <Route path="/thank-you" element={<ThankYou config={config} />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
