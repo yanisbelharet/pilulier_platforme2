@@ -12,19 +12,6 @@ const Storefront = lazy(() => import('./Storefront'));
 const ThankYou = lazy(() => import('./ThankYou'));
 
 export default function App() {
-  const [config, setConfig] = useState<{
-    productPrice: number;
-    productOldPrice: number;
-    promoActive: boolean;
-    promoText: string;
-    visits: number;
-    fbPixelId: string;
-    tiktokPixelId: string;
-    timerEnabled: boolean;
-    timerHours: number;
-    products: any[];
-  } | null>(null);
-
   const defaultProducts = [
     {
       id: "med-alarm",
@@ -56,6 +43,30 @@ export default function App() {
       customPath: "/product-v4/med-alarm"
     }
   ];
+
+  const [config, setConfig] = useState<{
+    productPrice: number;
+    productOldPrice: number;
+    promoActive: boolean;
+    promoText: string;
+    visits: number;
+    fbPixelId: string;
+    tiktokPixelId: string;
+    timerEnabled: boolean;
+    timerHours: number;
+    products: any[];
+  }>({
+    productPrice: 2900,
+    productOldPrice: 4200,
+    promoActive: true,
+    promoText: 'عرض ترويجي محدود!',
+    visits: 0,
+    fbPixelId: "",
+    tiktokPixelId: "",
+    timerEnabled: true,
+    timerHours: 24,
+    products: defaultProducts
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "config", "main"), (docSnap) => {
@@ -171,7 +182,6 @@ export default function App() {
     }
   };
 
-  if (!config) return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
 
   return (
     <Router>

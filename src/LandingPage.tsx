@@ -75,6 +75,8 @@ const Hero = ({ product, promoActive, timerEnabled, timerHours, onInitiateChecko
           <img 
             src={imageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5e4708705?q=80&w=800&auto=format&fit=crop'} 
             alt={name} 
+            fetchPriority="high"
+            loading="eager"
             className="w-full h-auto rounded-[40px] shadow-2xl border border-slate-100 object-cover"
           />
           {/* Badge */}
@@ -217,7 +219,7 @@ export const Testimonials = () => {
         <div className="space-y-6">
           {reviews.map((imgSrc, i) => (
             <div key={i} className="rounded-3xl overflow-hidden shadow-md border border-slate-100">
-              <img src={imgSrc} alt={`رأي زبون ${i + 1}`} className="w-full h-auto object-cover" />
+              <img loading="lazy" src={imgSrc} alt={`رأي زبون ${i + 1}`} className="w-full h-auto object-cover" />
             </div>
           ))}
         </div>

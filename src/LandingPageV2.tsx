@@ -52,7 +52,7 @@ export default function LandingPageV2({ config, onPurchase }: { config: any, onP
   return (
     <div className="min-h-screen bg-slate-100 pb-24 font-sans text-slate-800" dir="rtl">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl min-h-screen overflow-hidden flex flex-col">
-        <img src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/UcuCAbqBuLvphQwpgudEKiSTjNT7tkDWqG2nmVoF.webp" alt="Product" className="w-full object-cover" />
+        <img fetchPriority="high" loading="eager" src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/UcuCAbqBuLvphQwpgudEKiSTjNT7tkDWqG2nmVoF.webp" alt="Product" className="w-full object-cover" />
 
         <section id="checkout" className="py-8 bg-white px-4 border-t border-slate-100">
           <div className="max-w-xl mx-auto">
@@ -70,10 +70,10 @@ export default function LandingPageV2({ config, onPurchase }: { config: any, onP
           </a>
         </div>
 
-        <img src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/2G9Lpmj05VJfKGMUI8OFXtwK0j6KZHqkUDez5iJd.webp" alt="Product 2" className="w-full object-cover mt-2" />
-        <img src="https://cdn.youcan.shop/stores/defae844a0bbda3e5af90b6e7c10442b/others/K7xCrltppCNd4UVbJGSOqObap2IJ85nFDeub8El2.jpg" alt="Product 3" className="w-full object-cover mt-2" />
-        <img src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/9S9lQftX0vkGaYO3eBDEhZKZz3A7ASO4qX28iDo1.webp" alt="Product 4" className="w-full object-cover mt-2" />
-        <img src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/pZB4Jdism3G9XRZxfww4wFkEggmMA8PndiOsWMHi.webp" alt="Product 5" className="w-full object-cover mt-2" />
+        <img loading="lazy" src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/2G9Lpmj05VJfKGMUI8OFXtwK0j6KZHqkUDez5iJd.webp" alt="Product 2" className="w-full object-cover mt-2" />
+        <img loading="lazy" src="https://cdn.youcan.shop/stores/defae844a0bbda3e5af90b6e7c10442b/others/K7xCrltppCNd4UVbJGSOqObap2IJ85nFDeub8El2.jpg" alt="Product 3" className="w-full object-cover mt-2" />
+        <img loading="lazy" src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/9S9lQftX0vkGaYO3eBDEhZKZz3A7ASO4qX28iDo1.webp" alt="Product 4" className="w-full object-cover mt-2" />
+        <img loading="lazy" src="https://cdn.youcan.shop/stores/ba86712f261c8f3eed78e0e12a689855/others/pZB4Jdism3G9XRZxfww4wFkEggmMA8PndiOsWMHi.webp" alt="Product 5" className="w-full object-cover mt-2" />
 
         <Testimonials />
 

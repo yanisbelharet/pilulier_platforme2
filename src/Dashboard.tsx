@@ -464,13 +464,6 @@ export default function Dashboard() {
     
     try {
       const configToSave = { ...config };
-      if (configToSave.products) {
-        configToSave.products = configToSave.products.map((p: any) => ({
-          ...p,
-          price: configToSave.productPrice,
-          oldPrice: configToSave.productOldPrice
-        }));
-      }
       setConfig(configToSave);
       
       const res = await fetchAuth('/api/config', {
