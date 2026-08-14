@@ -7,6 +7,8 @@ import { createServer as createViteServer } from "vite";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore";
 
+console.log("[SERVER] server.ts loaded");
+
 // Default config
 const defaultConfig = {
   promoActive: true,
@@ -402,6 +404,7 @@ const wilayaMap: Record<string, string> = {
   });
 
   app.post("/api/submitOrder", async (req, res) => {
+    console.log("[ORDER] submitOrder started");
     try {
       const { name, phone, wilaya, commune, deliveryType, price, productId, productName, eventId } = req.body;
       
@@ -497,13 +500,13 @@ const wilayaMap: Record<string, string> = {
               }
             };
             const tiktokUrl = `https://business-api.tiktok.com/open_api/v1.3/pixel/track/`;
-            console.log(`\n[TikTok CAPI] --- STARTING REQUEST ---`);
-            console.log(`[TikTok CAPI] URL: ${tiktokUrl}`);
-            console.log(`[TikTok CAPI] Method: POST`);
-            console.log(`[TikTok CAPI] pixel_code: ${pixel}`);
-            console.log(`[TikTok CAPI] event: ${ttPayload.event}`);
-            console.log(`[TikTok CAPI] event_id: ${ttPayload.event_id}`);
-            console.log(`[TikTok CAPI] test_event_code: ${ttPayload.test_event_code}`);
+            console.log("[TIKTOK] About to send CompletePayment");
+            console.log("URL:", tiktokUrl);
+            console.log("Method: POST");
+            console.log("pixel_code:", pixel);
+            console.log("event:", ttPayload.event);
+            console.log("event_id:", ttPayload.event_id);
+            console.log("test_event_code:", ttPayload.test_event_code);
 
             fetch(tiktokUrl, {
               method: 'POST',
@@ -514,13 +517,12 @@ const wilayaMap: Record<string, string> = {
               body: JSON.stringify(ttPayload)
             })
             .then(async (response) => {
-              console.log(`[TikTok CAPI] HTTP Status: ${response.status}`);
-              const body = await response.text();
-              console.log(`[TikTok CAPI] Response Body: ${body}`);
-              console.log(`[TikTok CAPI] --- END REQUEST ---\n`);
+              const responseBody = await response.text();
+              console.log("[TIKTOK] HTTP status:", response.status);
+              console.log("[TIKTOK] response:", responseBody);
             })
             .catch(e => {
-              console.log(`[TikTok CAPI] Request failed before completion! Error:`, e);
+              console.log("[TIKTOK] Request failed before completion! Error:", e);
             });
           }
         }
