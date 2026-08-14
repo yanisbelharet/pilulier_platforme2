@@ -29,8 +29,17 @@ const defaultConfig = {
   ]
 };
 
-import fs from 'fs';
-const firebaseConfig = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
+const firebaseConfig = {
+  "projectId": "gen-lang-client-0983661862",
+  "appId": "1:492139124696:web:b67e8ef2beaa622150c4ad",
+  "apiKey": "AIzaSyBmaOFGKyMwJ735BkZ4Psmdx6H2rAtBei8",
+  "authDomain": "gen-lang-client-0983661862.firebaseapp.com",
+  "storageBucket": "gen-lang-client-0983661862.firebasestorage.app",
+  "messagingSenderId": "492139124696",
+  "measurementId": "",
+  "oAuthClientId": "492139124696-fou70ctrk9crnmou2tjfulb0tbpap4r8.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+};
 
 const firebaseApp = initializeApp({ projectId: firebaseConfig.projectId });
 const db = getFirestore(firebaseApp, "ai-studio-e9c2d681-7821-46c6-83a5-06aac423e67a");
@@ -69,12 +78,11 @@ function authMiddleware(req: any, res: any, next: any) {
   }
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  app.use(express.json());
-  app.use(cookieParser());
+app.use(express.json());
+app.use(cookieParser());
 
   // API routes FIRST
   app.get("/api/config", async (req, res) => {
@@ -468,23 +476,27 @@ const wilayaMap: Record<string, string> = {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+  if (!process.env.VERCEL) {
+    async function startViteAndListen() {
+      if (process.env.NODE_ENV !== "production") {
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: "spa",
+        });
+        app.use(vite.middlewares);
+      } else {
+        const distPath = path.join(process.cwd(), 'dist');
+        app.use(express.static(distPath));
+        app.get('*', (req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      }
+
+      app.listen(PORT as number, "0.0.0.0", () => {
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
+      });
+    }
+    startViteAndListen();
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
-}
-
-startServer();
+export default app;
