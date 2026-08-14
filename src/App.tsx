@@ -163,8 +163,10 @@ export default function App() {
   }, []);
 
   const handlePurchase = (price: number, product: any, formData?: any) => {
+    const eventId = formData?.eventId || `ORDER_${Date.now()}`;
+    
     if (config?.fbPixelId && window.fbq) {
-      window.fbq('track', 'Purchase', { value: price, currency: 'DZD' });
+      window.fbq('track', 'Purchase', { value: price, currency: 'DZD' }, { eventID: eventId });
     }
     if (config?.tiktokPixelId && window.ttq) {
       if (formData && formData.phone) {
@@ -186,6 +188,8 @@ export default function App() {
         }],
         value: price,
         currency: 'DZD'
+      }, {
+        event_id: eventId
       });
     }
   };

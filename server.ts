@@ -80,7 +80,7 @@ function authMiddleware(req: any, res: any, next: any) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 app.use(cookieParser());
@@ -403,7 +403,7 @@ const wilayaMap: Record<string, string> = {
 
   app.post("/api/submitOrder", async (req, res) => {
     try {
-      const { name, phone, wilaya, commune, deliveryType, price, productId, productName } = req.body;
+      const { name, phone, wilaya, commune, deliveryType, price, productId, productName, eventId } = req.body;
       
       let nextOrderNumber = 1;
       let configData: any = {};
@@ -447,6 +447,7 @@ const wilayaMap: Record<string, string> = {
         const userAgent = req.headers['user-agent'] || '';
         const phoneHash = crypto.createHash('sha256').update(String(phone).trim()).digest('hex');
         const reqUrl = req.headers.referer || "https://" + req.headers.host;
+        const finalEventId = eventId || `ORDER_${nextOrderNumber}_${Date.now()}`;
         
         // Facebook CAPI
         if (configData.fbPixelId && configData.fbAccessToken) {
@@ -457,6 +458,7 @@ const wilayaMap: Record<string, string> = {
                 event_name: "Purchase",
                 event_time: Math.floor(Date.now() / 1000),
                 action_source: "website",
+                event_id: finalEventId,
                 user_data: {
                   client_ip_address: clientIp,
                   client_user_agent: userAgent,
@@ -480,7 +482,8 @@ const wilayaMap: Record<string, string> = {
             const ttPayload = {
               pixel_code: pixel,
               event: "CompletePayment",
-              event_id: `ORDER_${nextOrderNumber}_${Date.now()}`,
+              event_id: finalEventId,
+              test_event_code: "TEST80955",
               timestamp: new Date().toISOString(),
               context: {
                 ip: clientIp,

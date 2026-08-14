@@ -256,6 +256,8 @@ export const CheckoutForm = ({ product, promoActive, promoText, onPurchase }: { 
     e.preventDefault();
     setLoading(true);
     
+    const eventId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
     try {
       const response = await fetch('/api/submitOrder', {
         method: 'POST',
@@ -266,12 +268,13 @@ export const CheckoutForm = ({ product, promoActive, promoText, onPurchase }: { 
           ...formData,
           price: totalPrice,
           productId: product.id,
-          productName: product.name
+          productName: product.name,
+          eventId
         }),
       });
       
       if (response.ok) {
-        onPurchase(productPrice, product, formData);
+        onPurchase(productPrice, product, { ...formData, eventId });
         navigate('/thank-you', {
           state: {
             orderDetails: {
