@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore";
@@ -405,11 +406,13 @@ const wilayaMap: Record<string, string> = {
       const { name, phone, wilaya, commune, deliveryType, price, productId, productName } = req.body;
       
       let nextOrderNumber = 1;
+      let configData: any = {};
       try {
         const configRef = doc(db, "config", "main");
         const configSnap = await getDoc(configRef);
         if (configSnap.exists()) {
-          nextOrderNumber = (configSnap.data().orderCounter || 0) + 1;
+          configData = configSnap.data();
+          nextOrderNumber = (configData.orderCounter || 0) + 1;
           await setDoc(configRef, { orderCounter: nextOrderNumber }, { merge: true });
         }
       } catch (err) {
@@ -437,6 +440,73 @@ const wilayaMap: Record<string, string> = {
       } catch (err) {
         console.error("Error saving order to Firestore:", err);
       }
+
+      // --- Conversions API (CAPI) ---
+      try {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        const userAgent = req.headers['user-agent'] || '';
+        const phoneHash = crypto.createHash('sha256').update(String(phone).trim()).digest('hex');
+        const reqUrl = req.headers.referer || "https://" + req.headers.host;
+        
+        // Facebook CAPI
+        if (configData.fbPixelId && configData.fbAccessToken) {
+          const fbPixels = configData.fbPixelId.split(',').map((p: string) => p.trim()).filter(Boolean);
+          for (const pixel of fbPixels) {
+            const fbPayload = {
+              data: [{
+                event_name: "Purchase",
+                event_time: Math.floor(Date.now() / 1000),
+                action_source: "website",
+                user_data: {
+                  client_ip_address: clientIp,
+                  client_user_agent: userAgent,
+                  ph: [phoneHash]
+                },
+                custom_data: { currency: "DZD", value: Number(price) }
+              }]
+            };
+            fetch(`https://graph.facebook.com/v17.0/${pixel}/events?access_token=${configData.fbAccessToken}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fbPayload)
+            }).catch(e => console.error("FB CAPI Error", e));
+          }
+        }
+        
+        // TikTok Events API
+        if (configData.tiktokPixelId && configData.tiktokAccessToken) {
+          const ttPixels = configData.tiktokPixelId.split(',').map((p: string) => p.trim()).filter(Boolean);
+          for (const pixel of ttPixels) {
+            const ttPayload = {
+              pixel_code: pixel,
+              event: "CompletePayment",
+              event_id: `ORDER_${nextOrderNumber}_${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              context: {
+                ip: clientIp,
+                user_agent: userAgent,
+                page: { url: reqUrl }
+              },
+              properties: {
+                contents: [{ price: Number(price), quantity: 1 }],
+                value: Number(price),
+                currency: "DZD"
+              }
+            };
+            fetch(`https://business-api.tiktok.com/open_api/v1.3/pixel/track/`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Access-Token': configData.tiktokAccessToken
+              },
+              body: JSON.stringify(ttPayload)
+            }).catch(e => console.error("TikTok CAPI Error", e));
+          }
+        }
+      } catch (err) {
+        console.error("CAPI error:", err);
+      }
+      // -----------------------------
 
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       const chatId = process.env.TELEGRAM_CHAT_ID;

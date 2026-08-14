@@ -52,6 +52,8 @@ export default function App() {
     visits: number;
     fbPixelId: string;
     tiktokPixelId: string;
+    fbAccessToken: string;
+    tiktokAccessToken: string;
     timerEnabled: boolean;
     timerHours: number;
     products: any[];
@@ -63,6 +65,8 @@ export default function App() {
     visits: 0,
     fbPixelId: "",
     tiktokPixelId: "",
+    fbAccessToken: "",
+    tiktokAccessToken: "",
     timerEnabled: true,
     timerHours: 24,
     products: defaultProducts
@@ -91,6 +95,8 @@ export default function App() {
            visits: 0,
            fbPixelId: "",
            tiktokPixelId: "",
+           fbAccessToken: "",
+           tiktokAccessToken: "",
            timerEnabled: true,
            timerHours: 24,
            ...data,
@@ -106,6 +112,8 @@ export default function App() {
           visits: 0,
           fbPixelId: "",
           tiktokPixelId: "",
+          fbAccessToken: "",
+          tiktokAccessToken: "",
           timerEnabled: true,
           timerHours: 24,
           products: defaultProducts

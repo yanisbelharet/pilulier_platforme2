@@ -19,6 +19,8 @@ export default function Dashboard() {
     visits: 0,
     fbPixelId: '',
     tiktokPixelId: '',
+    fbAccessToken: '',
+    tiktokAccessToken: '',
     timerEnabled: true,
     timerHours: 24,
     products: []
@@ -1405,20 +1407,40 @@ export default function Dashboard() {
                         <label className="block text-sm font-bold text-slate-700 mb-2">Facebook Pixel ID <span className="text-slate-400 font-normal">(séparés par des virgules)</span></label>
                         <input 
                           type="text" 
-                          value={config.fbPixelId}
+                          value={config.fbPixelId || ''}
                           onChange={(e) => setConfig({...config, fbPixelId: e.target.value})}
                           className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
                           placeholder="ex: 123456789, 987654321"
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Facebook CAPI Access Token <span className="text-slate-400 font-normal">(Optionnel)</span></label>
+                        <input 
+                          type="text" 
+                          value={config.fbAccessToken || ''}
+                          onChange={(e) => setConfig({...config, fbAccessToken: e.target.value})}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
+                          placeholder="Token d'accès Facebook Conversions API"
+                        />
+                      </div>
+                      <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">TikTok Pixel ID <span className="text-slate-400 font-normal">(séparés par des virgules)</span></label>
                         <input 
                           type="text" 
-                          value={config.tiktokPixelId}
+                          value={config.tiktokPixelId || ''}
                           onChange={(e) => setConfig({...config, tiktokPixelId: e.target.value})}
                           className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
                           placeholder="ex: CJ123XYZ, CK987ABC"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">TikTok CAPI Access Token <span className="text-slate-400 font-normal">(Optionnel)</span></label>
+                        <input 
+                          type="text" 
+                          value={config.tiktokAccessToken || ''}
+                          onChange={(e) => setConfig({...config, tiktokAccessToken: e.target.value})}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
+                          placeholder="Token d'accès TikTok Events API"
                         />
                       </div>
                     </div>
