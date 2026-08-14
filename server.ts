@@ -496,14 +496,32 @@ const wilayaMap: Record<string, string> = {
                 currency: "DZD"
               }
             };
-            fetch(`https://business-api.tiktok.com/open_api/v1.3/pixel/track/`, {
+            const tiktokUrl = `https://business-api.tiktok.com/open_api/v1.3/pixel/track/`;
+            console.log(`\n[TikTok CAPI] --- STARTING REQUEST ---`);
+            console.log(`[TikTok CAPI] URL: ${tiktokUrl}`);
+            console.log(`[TikTok CAPI] Method: POST`);
+            console.log(`[TikTok CAPI] pixel_code: ${pixel}`);
+            console.log(`[TikTok CAPI] event: ${ttPayload.event}`);
+            console.log(`[TikTok CAPI] event_id: ${ttPayload.event_id}`);
+            console.log(`[TikTok CAPI] test_event_code: ${ttPayload.test_event_code}`);
+
+            fetch(tiktokUrl, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
                 'Access-Token': configData.tiktokAccessToken
               },
               body: JSON.stringify(ttPayload)
-            }).catch(e => console.error("TikTok CAPI Error", e));
+            })
+            .then(async (response) => {
+              console.log(`[TikTok CAPI] HTTP Status: ${response.status}`);
+              const body = await response.text();
+              console.log(`[TikTok CAPI] Response Body: ${body}`);
+              console.log(`[TikTok CAPI] --- END REQUEST ---\n`);
+            })
+            .catch(e => {
+              console.log(`[TikTok CAPI] Request failed before completion! Error:`, e);
+            });
           }
         }
       } catch (err) {
