@@ -3,7 +3,7 @@ import path from "path";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
+
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, increment } from "firebase/firestore";
 
@@ -572,7 +572,8 @@ const wilayaMap: Record<string, string> = {
   if (!process.env.VERCEL) {
     async function startViteAndListen() {
       if (process.env.NODE_ENV !== "production") {
-        const vite = await createViteServer({
+        const { createServer } = await import("vite");
+        const vite = await createServer({
           server: { middlewareMode: true },
           appType: "spa",
         });
