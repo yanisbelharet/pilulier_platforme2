@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   projectId: "gen-lang-client-0983661862",
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, phone, wilaya, commune, deliveryType, price } = req.body;
+    const { name, phone, wilaya, commune, deliveryType, price, eventId, productId, productName } = req.body;
       
     // Save order to Firestore
     try {
@@ -62,6 +62,64 @@ export default async function handler(req, res) {
       const errorData = await response.json();
       console.error("Telegram API Error:", errorData);
       return res.status(500).json({ success: false, error: "Failed to send to Telegram" });
+    }
+
+    // TikTok Events API
+    try {
+      let configData: any = {};
+      const configRef = doc(db, "config", "main");
+      const configSnap = await getDoc(configRef);
+      if (configSnap.exists()) {
+        configData = configSnap.data();
+      }
+
+      if (configData.tiktokPixelId && configData.tiktokAccessToken && eventId) {
+        const clientIp = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+        const userAgent = req.headers['user-agent'] || '';
+        const reqUrl = req.headers.referer || req.headers.origin || "https://" + (req.headers.host || '');
+        
+        const ttPixels = configData.tiktokPixelId.split(',').map((p: string) => p.trim()).filter(Boolean);
+        for (const pixel of ttPixels) {
+          const ttPayload = {
+            pixel_code: pixel,
+            event: "CompletePayment",
+            event_id: eventId,
+            test_event_code: "TEST80955",
+            timestamp: new Date().toISOString(),
+            context: {
+              ip: clientIp,
+              user_agent: userAgent,
+              page: { url: reqUrl }
+            },
+            properties: {
+              contents: [{ price: Number(price), quantity: 1 }],
+              value: Number(price),
+              currency: "DZD"
+            }
+          };
+
+          const tiktokUrl = `https://business-api.tiktok.com/open_api/v1.3/pixel/track/`;
+          console.log("[TIKTOK CAPI] START");
+          console.log("[TIKTOK CAPI] event:", "CompletePayment");
+          console.log("[TIKTOK CAPI] event_id:", eventId);
+          console.log("[TIKTOK CAPI] test_event_code:", "TEST80955");
+
+          const ttResponse = await fetch(tiktokUrl, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Token': configData.tiktokAccessToken
+            },
+            body: JSON.stringify(ttPayload)
+          });
+          
+          const ttResponseBody = await ttResponse.text();
+          console.log("[TIKTOK CAPI] HTTP STATUS:", ttResponse.status);
+          console.log("[TIKTOK CAPI] RESPONSE:", ttResponseBody);
+        }
+      }
+    } catch (ttErr) {
+      console.error("[TIKTOK CAPI] Error:", ttErr);
     }
 
     return res.status(200).json({ success: true });
