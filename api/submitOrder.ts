@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
+import { DELIVERY_PRICES } from "../src/data";
+
 const firebaseConfig = {
   projectId: "gen-lang-client-0983661862",
   appId: "1:492139124696:web:b67e8ef2beaa622150c4ad",
@@ -19,7 +21,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, phone, wilaya, commune, deliveryType, price, eventId, productId, productName } = req.body;
+    const { name, phone, wilaya, commune, deliveryType, price, eventId, productId, productName, productPrice } = req.body;
       
     // Save order to Firestore
     try {
@@ -78,6 +80,10 @@ export default async function handler(req, res) {
         const userAgent = req.headers['user-agent'] || '';
         const reqUrl = req.headers.referer || req.headers.origin || "https://" + (req.headers.host || '');
         
+        const wilayaPrice = wilaya ? DELIVERY_PRICES[wilaya] : null;
+        const deliveryPrice = wilayaPrice && deliveryType ? wilayaPrice[deliveryType as 'home' | 'desk'] : 0;
+        const basePrice = productPrice !== undefined ? Number(productPrice) : (Number(price) - deliveryPrice);
+
         const ttPixels = configData.tiktokPixelId.split(',').map((p: string) => p.trim()).filter(Boolean);
         for (const pixel of ttPixels) {
           const ttPayload = {
@@ -92,8 +98,8 @@ export default async function handler(req, res) {
               page: { url: reqUrl }
             },
             properties: {
-              contents: [{ price: Number(price), quantity: 1 }],
-              value: Number(price),
+              contents: [{ price: basePrice, quantity: 1 }],
+              value: basePrice,
               currency: "DZD"
             }
           };
@@ -104,18 +110,33 @@ export default async function handler(req, res) {
           console.log("[TIKTOK CAPI] event_id:", eventId);
           console.log("[TIKTOK CAPI] test_event_code:", "TEST80955");
 
-          const ttResponse = await fetch(tiktokUrl, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Access-Token': configData.tiktokAccessToken
-            },
-            body: JSON.stringify(ttPayload)
-          });
-          
-          const ttResponseBody = await ttResponse.text();
-          console.log("[TIKTOK CAPI] HTTP STATUS:", ttResponse.status);
-          console.log("[TIKTOK CAPI] RESPONSE:", ttResponseBody);
+          console.log("[TIKTOK CAPI] BEFORE FETCH");
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const ttResponse = await fetch(tiktokUrl, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Access-Token': configData.tiktokAccessToken
+              },
+              body: JSON.stringify(ttPayload),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            console.log("[TIKTOK CAPI] AFTER FETCH");
+            const ttResponseBody = await ttResponse.text();
+            console.log("[TIKTOK CAPI] HTTP STATUS:", ttResponse.status);
+            console.log("[TIKTOK CAPI] RESPONSE:", ttResponseBody);
+          } catch (fetchErr: any) {
+            if (fetchErr.name === 'AbortError') {
+              console.error("[TIKTOK CAPI] FETCH TIMEOUT");
+            } else {
+              console.error("[TIKTOK CAPI] FETCH ERROR:", fetchErr);
+            }
+          }
         }
       }
     } catch (ttErr) {
